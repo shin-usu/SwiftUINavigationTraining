@@ -39,6 +39,7 @@ final class Step2ViewModel {
     }
 }
 
+@MainActor
 struct Step2View: View {
     @State var model = Step2ViewModel()
 

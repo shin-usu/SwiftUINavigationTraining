@@ -16,6 +16,7 @@ final class Step3ViewModel {
     }
 }
 
+@MainActor
 struct Step3View: View {
     @State var model = Step3ViewModel()
 
