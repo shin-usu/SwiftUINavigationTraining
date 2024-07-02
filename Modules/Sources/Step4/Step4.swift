@@ -1,6 +1,5 @@
 import SwiftUI
 import Observation
-import SwiftUINavigation
 
 @MainActor
 @Observable

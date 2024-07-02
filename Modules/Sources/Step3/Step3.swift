@@ -5,11 +5,14 @@ import Observation
 @Observable
 final class Step3ViewModel {
     var isPresentedLoading = false
+    var loadingText = ""
 
     func asyncFunction() async {
         isPresentedLoading = true
+        loadingText = "Now loading"
         try? await Task.sleep(nanoseconds: 2_000_000_000)
         isPresentedLoading = false
+        loadingText = ""
     }
 }
 
@@ -25,7 +28,7 @@ struct Step3View: View {
                     Text("Start async function")
                 }
             }
-            .loading(isPresented: $model.isPresentedLoading)
+            .loading(isPresented: $model.isPresentedLoading, text: $model.loadingText)
         }
     }
 }
