@@ -1,18 +1,21 @@
 import SwiftUI
 import Observation
+import SwiftUINavigation
 
 @MainActor
 @Observable
 final class Step3ViewModel {
-    var isPresentedLoading = false
-    var loadingText = ""
+    @CasePathable
+    enum Destination {
+        case loading(LoadingState)
+    }
+
+    var destination: Destination?
 
     func asyncFunction() async {
-        isPresentedLoading = true
-        loadingText = "Now loading"
+        destination = .loading(LoadingState(text: "Now loading"))
         try? await Task.sleep(nanoseconds: 2_000_000_000)
-        isPresentedLoading = false
-        loadingText = ""
+        destination = nil
     }
 }
 
@@ -28,7 +31,7 @@ struct Step3View: View {
                     Text("Start async function")
                 }
             }
-            .loading(isPresented: $model.isPresentedLoading, text: $model.loadingText)
+            .loading($model.destination.loading)
         }
     }
 }
