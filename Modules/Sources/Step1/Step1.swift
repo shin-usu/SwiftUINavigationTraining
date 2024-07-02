@@ -1,18 +1,24 @@
 import SwiftUI
 import Observation
+import SwiftUINavigation
 
 @MainActor
 @Observable
 final class Step1ViewModel {
-    var addItem: Item?
-    var editItem: Item?
+    @CasePathable
+    enum Destination {
+        case add(Item)
+        case edit(Item)
+    }
     
+    var destination: Destination?
+
     func addButtonTapped() {
-        addItem = .init(title: "Add")
+        destination = .add(.init(title: "Add"))
     }
     
     func editButtonTapped() {
-        editItem = .init(title: "Edit")
+        destination = .edit(.init(title: "Edit"))
     }
 }
 
@@ -35,10 +41,10 @@ struct Step1View: View {
                     Text("Edit Item")
                 }
             }
-            .navigationDestination(item: $model.addItem) { item in
+            .navigationDestination(item: $model.destination.add) { item in
                 AddItemView(item: item)
             }
-            .navigationDestination(item: $model.editItem) { item in
+            .navigationDestination(item: $model.destination.edit) { item in
                 EditItemView(item: item)
             }
         }
