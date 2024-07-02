@@ -1,27 +1,48 @@
 import SwiftUI
 import Observation
+import SwiftUINavigation
 
 @MainActor
 @Observable
 final class Step4ViewModel {
-    var isPresentedSuccessAlert = false
-    var isPresentedFailureAlert = false
-    var isPresentedLoading = false
-    var loadingText = ""
+    @CasePathable
+    enum Destination {
+        case loading(LoadingState)
+        case alert(AlertState<AlertAction>)
+        
+        enum AlertAction {
+            case retryAsyncFunction
+        }
+    }
+    
+    var destination: Destination?
 
     func asyncFunction() async {
-        isPresentedLoading = true
-        loadingText = "Now loading"
+        destination = .loading(LoadingState(text: "Now loading"))
         try? await Task.sleep(nanoseconds: 1_000_000_000)
-        loadingText = "A little more"
+        destination = .loading(LoadingState(text: "A little more"))
         try? await Task.sleep(nanoseconds: 1_000_000_000)
         let success = Bool.random()
         if success {
-            isPresentedSuccessAlert = true
+            destination = .alert(AlertState(title: {
+                TextState("Success")
+            }, message: {
+                TextState("Result is success!!")
+            }))
         } else {
-            isPresentedFailureAlert = true
+            destination = .alert(AlertState(title: {
+                TextState("Failure")
+            }, actions: {
+                ButtonState(action: .retryAsyncFunction) {
+                    TextState("Retry")
+                }
+                ButtonState {
+                    TextState("OK")
+                }
+            }, message: {
+                TextState("Result is success!!")
+            }))
         }
-        isPresentedLoading = false
     }
 }
 
@@ -37,31 +58,15 @@ struct Step4View: View {
                     Text("Start async function")
                 }
             }
-            .loading(
-                isPresented: $model.isPresentedLoading,
-                text: $model.loadingText
-            )
-            .alert(
-                "Success",
-                isPresented: $model.isPresentedSuccessAlert,
-                actions: {},
-                message: {
-                    Text("Result is success!!")
+            .loading($model.destination.loading)
+            .alert($model.destination.alert) { action in
+                switch action {
+                case .retryAsyncFunction:
+                    Task { await model.asyncFunction() }
+                case .none:
+                    break
                 }
-            )
-            .alert(
-                "Failure",
-                isPresented: $model.isPresentedFailureAlert,
-                actions: {
-                    Button("Retry") {
-                        Task { await model.asyncFunction() }
-                    }
-                    Button("OK") {}
-                },
-                message: {
-                    Text("Result is failure")
-                }
-            )
+            }
         }
     }
 }

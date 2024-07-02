@@ -1,5 +1,6 @@
 import UIKit
 import SwiftUI
+import SwiftUINavigation
 
 extension UIApplication {
     static var progressWindow: UIWindow?
@@ -23,12 +24,12 @@ extension UIApplication {
 }
 
 struct CustomProgressView: View {
-    @Binding var text: String
+    @Binding var state: LoadingState?
 
     var body: some View {
         VStack(spacing: 8) {
-            if !text.isEmpty {
-                Text(text)
+            if let state {
+                Text(state.text)
             }
             ProgressView()
         }
@@ -40,14 +41,14 @@ struct CustomProgressView: View {
 
 struct LoadingModifier: ViewModifier {
     @Binding var isPresented: Bool
-    @Binding var text: String
+    @Binding var state: LoadingState?
     
     func body(content: Content) -> some View {
         content
             .onChange(of: isPresented) { oldValue, newValue in
                 if newValue == true {
                     UIApplication.showProgress {
-                        CustomProgressView(text: _text)
+                        CustomProgressView(state: $state)
                     }
                 } else {
                     UIApplication.hideProgress()
@@ -56,8 +57,14 @@ struct LoadingModifier: ViewModifier {
     }
 }
 
+struct LoadingState {
+    var text: String
+}
+
 extension View {
-    func loading(isPresented: Binding<Bool>, text: Binding<String> = .constant("")) -> some View {
-        modifier(LoadingModifier(isPresented: isPresented, text: text))
+    func loading(
+        _ item: Binding<LoadingState?>
+    ) -> some View {
+        modifier(LoadingModifier(isPresented: Binding(item), state: item))
     }
 }
