@@ -1,41 +1,74 @@
 import SwiftUI
 import Observation
+import SwiftUINavigation
 
 @MainActor
 @Observable
 final class Step2ViewModel {
-    var isPresentedAlert = false
-    var sheetItem: Item?
-    var fullscreenItem: Item?
-    var isPresentedConfirmationDialog = false
-    var isPresentedPopover = false
+    @CasePathable
+    enum Destination {
+        case alert(AlertState<Never>)
+        case itemSheet(Item)
+        case itemFullscreenCover(Item)
+        case smilePopover(Item)
+        case confirmationDialog(ConfirmationDialogState<DialogAction>)
+        
+        enum DialogAction {
+            case action1
+            case action2
+            case action3
+        }
+    }
+    
+    var destination: Destination?
     
     func alertButtonTapped() {
-        isPresentedAlert = true
+        destination = .alert(AlertState(title: {
+            TextState("Hello")
+        }, message: {
+            TextState("Hello!\nNice to meet you!!")
+        }))
     }
     
     func sheetButtonTapped() {
-        sheetItem = .init(title: "Sheet")
+        destination = .itemSheet(.init(title: "Sheet"))
     }
 
     func sheetBarButtonTapped() {
-        sheetItem = nil
+        destination = nil
     }
     
     func fullscreenCoverButtonTapped() {
-        fullscreenItem = .init(title: "Fullscreen Cover")
+        destination = .itemFullscreenCover(.init(title: "Fullscreen Cover"))
     }
 
     func fullscreenBarButtonTapped() {
-        fullscreenItem = nil
+        destination = nil
     }
     
     func confirmationDialogButtonTapped() {
-        isPresentedConfirmationDialog = true
+        destination = .confirmationDialog(
+            ConfirmationDialogState(
+                title: {
+                    TextState("Dialog actions")
+                },
+                actions: {
+                    ButtonState(action: .action1) {
+                        TextState("Action1")
+                    }
+                    ButtonState(action: .action2) {
+                        TextState("Action2")
+                    }
+                    ButtonState(role: .destructive, action: .action3) {
+                        TextState("Action3")
+                    }
+                }
+            )
+        )
     }
     
     func popoverButtonTapped() {
-        isPresentedPopover = true
+        destination = .smilePopover(.init(title: "😄"))
     }
 }
 
@@ -74,15 +107,13 @@ struct Step2View: View {
                 } label: {
                     Text("Popover")
                 }
-                .popover(isPresented: $model.isPresentedPopover) {
-                    Text("😄")
+                .popover(item: $model.destination.smilePopover) { item in
+                    ItemView(item: item)
                         .presentationCompactAdaptation(.popover)
                 }
             }
-            .alert("Hello", isPresented: $model.isPresentedAlert, actions: {}) {
-                Text("Hello!\nNice to meet you!!")
-            }
-            .sheet(item: $model.sheetItem) { item in
+            .alert($model.destination.alert)
+            .sheet(item: $model.destination.itemSheet) { item in
                 NavigationStack {
                     ItemView(item: item)
                         .toolbar {
@@ -94,7 +125,7 @@ struct Step2View: View {
                         }
                 }
             }
-            .fullScreenCover(item: $model.fullscreenItem) { item in
+            .fullScreenCover(item: $model.destination.itemFullscreenCover) { item in
                 NavigationStack {
                     ItemView(item: item)
                         .toolbar {
@@ -106,18 +137,16 @@ struct Step2View: View {
                         }
                 }
             }
-            .confirmationDialog(
-                "Dialog actions",
-                isPresented: $model.isPresentedConfirmationDialog
-            ) {
-                Button("Action1") {
+            .confirmationDialog($model.destination.confirmationDialog) { action in
+                switch action {
+                case .action1:
                     print("Action1")
-                }
-                Button("Action2") {
+                case .action2:
                     print("Action2")
-                }
-                Button("Action3") {
+                case .action3:
                     print("Action3")
+                case .none:
+                    break
                 }
             }
         }
