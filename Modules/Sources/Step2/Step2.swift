@@ -75,7 +75,7 @@ struct Step2View: View {
                     Text("Popover")
                 }
                 .popover(isPresented: $model.isPresentedPopover) {
-                    Text("😄")
+                    ItemView(item: .init(title: "😄"))
                         .presentationCompactAdaptation(.popover)
                 }
             }
